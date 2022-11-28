@@ -98,19 +98,55 @@ def backwardElimination(df):
         print("Feature set ", bestSet, " was best, accuracy is ", float("{:.2f}".format(best[0]*100)), "%\n")
 
     bestSet = max(bestArr)
-    print("Finish search!! The best feature subset is ", bestSet[1], ", which has an accuracy of ", float("{:.2f}".format(bestSet[0]*100)), "%")
+    print("Finish search!! The best feature subset is ", bestSet[1], ", which has an accuracy of ", float("{:.2f}".format(bestSet[0]*100)), "%\n")
 
 
 def main():
     start = time.time()
     
-    # inputFile = 'datasets/CS170_Small_Data__6.txt' 
-    inputFile = 'datasets/CS170_Large_Data__96.txt' 
-    # Using pandas to convert txt to csv
-    dataFrame = pd.read_csv(inputFile, header = None, delim_whitespace=True,)
+    print("Welcome to CS170 project 2 - Feature Selection using Nearest Neighbor")
     
-    forwardSelection(dataFrame)
-    # backwardElimination(dataFrame)
+    validFile = False
+    while(not validFile):
+        try:
+            selection = input("Enter '1' to run a small dataset, '2' to run a large dataset: ")
+            if selection == '1':
+                fileSize = "Small_Data"
+            elif selection == '2':
+                fileSize = "Large_Data"
+
+            fileSelection = input("\nEnter the number of dataset you want to run (1-125) : ")
+            
+            inputFile = 'datasets/CS170_' + fileSize + "__" + fileSelection + ".txt"
+            print("Selected dataset: ", inputFile + '\n')
+            
+            # Using pandas to convert txt to csv
+            dataFrame = pd.read_csv(inputFile, header = None, delim_whitespace=True)
+            validFile = True
+            
+        except KeyboardInterrupt:
+            print("\n\n\nKeyboardInterrupt")
+            print("Exiting the program now...")
+            return(1)
+        
+        except:
+            print("Invalid file...")
+            print("Please enter again!\n")
+            
+        
+            
+    
+    print("This dataset has ", dataFrame.shape[1] - 1, " features (not including the class attribute), with ", dataFrame.shape[0], " instances.\n")
+    
+    algroSelection = input("Enter '1' to run Forward Selection, '2' to run Backward Elimination: ")
+    if algroSelection == '1':
+        print("\nRunning Forward Selection with all ", dataFrame.shape[1] - 1, " features, using Nearest Neighbor classifier")
+        print("Beginning search...")
+        forwardSelection(dataFrame)
+    else:
+        print("\nRunning Backward Elimination with all ", dataFrame.shape[1] - 1, " features, using Nearest Neighbor classifier")
+        print("Beginning search...")
+        backwardElimination(dataFrame)
     
     end = time.time()
     print("Time taken is ", float("{:.2f}".format(end - start)), " seconds")

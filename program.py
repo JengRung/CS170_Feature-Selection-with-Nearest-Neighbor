@@ -1,5 +1,8 @@
 import pandas as pd
 import time
+import multiprocessing
+
+POOL = multiprocessing.Pool(processes=4)
 
 def nearestNeighbor(df, indexList):
     '''

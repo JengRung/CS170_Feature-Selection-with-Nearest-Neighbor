@@ -1,6 +1,9 @@
+from numba import jit, cuda
 import pandas as pd
 import time
+import numpy as np
 
+@jit(nopython=True, target_backend='cuda')
 def nearestNeighbor(df, indexList):
     '''
     nearest neighbor process:
@@ -17,19 +20,20 @@ def nearestNeighbor(df, indexList):
         for j in range(size):
             if i != j:
                 # Calculate the distance between the current point and all other points
-                dist = 0
+                dist = float(0)
                 for k in indexList:
-                    dist += (df[k][i] - df[k][j]) ** 2
+                    dist += float(df[i][k] - df[j][k]) ** 2
                 dist = dist ** 0.5
                 distance.append([dist, j])
         # Find the minimum distance and the index of the point
         minDist = min(distance)
         # Check if the type of the point is the same as the type of the nearest neighbor
-        if df[0][i] == df[0][minDist[1]]:
+        if df[i][0] == int(df[int(minDist[1])][0]):
             correctCount += 1
 
     accuracy = correctCount / size
-    print("Using feature(s) ", indexList, " accuracy is ", float("{:.2f}".format(accuracy*100)), "%")
+    roundAccuracy = round(accuracy*100, 2)
+    print("Using feature(s) ", indexList, " accuracy is ", roundAccuracy, "%")
     return accuracy
 
 def forwardSelection(df):
@@ -47,6 +51,7 @@ def forwardSelection(df):
                 tempArr = []
                 tempArr.extend(curArr)
                 tempArr.append(i)
+                tempArr = np.array(tempArr)
                 result.append([nearestNeighbor(df, tempArr), i])
         best = max(result)
         
@@ -73,12 +78,14 @@ def backwardElimination(df):
         curArr.append(i)
     
     # Test all the subsets
-    allSetAccuracy = nearestNeighbor(df, curArr)
-    bestArr.append([allSetAccuracy, curArr])
+    tempArr = np.array(curArr)
+    allSetAccuracy = nearestNeighbor(df, tempArr)
+    bestArr.append([allSetAccuracy, tempArr])
     print("Feature set ", curArr, " was best, accuracy is ", float("{:.2f}".format(allSetAccuracy*100)), "%\n")
     
-    # Start to eliminate the feature until the size reach 0
-    while(len(curArr) != 0):
+    # Start to eliminate the feature until the size reach 1
+    while(len(curArr) != 1):
+        print(curArr)
         result = []
         for i in range(1, rowSize, 1):
             # Call the nearestNeighbor function
@@ -86,6 +93,7 @@ def backwardElimination(df):
                 tempArr = []
                 tempArr.extend(curArr)
                 tempArr.remove(i)
+                tempArr = np.array(tempArr)
                 result.append([nearestNeighbor(df, tempArr), i])
         best = max(result)
         
@@ -96,7 +104,9 @@ def backwardElimination(df):
         
         curArr.remove(best[1])
         print("Feature set ", bestSet, " was best, accuracy is ", float("{:.2f}".format(best[0]*100)), "%\n")
-
+    # print("Finish Backward Elimination!!")
+    # print("bestSet: ", bestSet)
+    
     bestSet = max(bestArr)
     print("Finish search!! The best feature subset is ", bestSet[1], ", which has an accuracy of ", float("{:.2f}".format(bestSet[0]*100)), "%\n")
 
@@ -135,8 +145,11 @@ def main():
             
         
             
+    # Convert the dataframe to numpy array for faster computation
+    dataFrame = dataFrame.to_numpy()
     
     print("This dataset has ", dataFrame.shape[1] - 1, " features (not including the class attribute), with ", dataFrame.shape[0], " instances.\n")
+    
     
     algroSelection = input("Enter '1' to run Forward Selection, '2' to run Backward Elimination: ")
     if algroSelection == '1':
